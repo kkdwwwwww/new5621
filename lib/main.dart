@@ -29,8 +29,8 @@ class CoreLogic {
   static const plat = MethodChannel("wasd");
   int steps = 0;
   String lastDate = "";
-  List<double> w = [0,0,0,0,0,0,0];
-  List<double> m = [0,0,0,0,0,0,0,0,0,0,0,0];
+  List<double> w = List.filled(7, 0.0);
+  List<double> m = List.filled(12, 0.0);
   Function? _onUpdate;
   void init(Function onUpdate){
     _onUpdate = onUpdate;
