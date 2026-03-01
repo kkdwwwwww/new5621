@@ -1,5 +1,4 @@
 import 'dart:convert';
-import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
@@ -74,6 +73,14 @@ class CoreLogic {
     if(jS == null || jS.isEmpty) return{};
     return json.decode(jS);
   }
+  Future<void> clearData() async{
+    steps = 0;
+    lastDate = DateTime.now().toString().split(' ')[0];
+    w = List.filled(7, 0.0);
+    m = List.filled(12, 0.0);
+    await save();
+    _onUpdate?.call();
+  }
 
   void _checkDateChange() {
     String todayStr = DateTime.now().toString().split(' ')[0];
@@ -114,6 +121,9 @@ class _MyHomePageState extends State<MyHomePage> {
       appBar: AppBar(
         backgroundColor: Theme.of(context).colorScheme.inversePrimary,
         title: Text("需求一"),
+        actions: [
+          IconButton(onPressed: ()=>core.clearData(), icon: Icon(Icons.delete))
+        ],
       ),
       body: ListView(
         children: [
@@ -187,6 +197,9 @@ class _WPState extends State<WP> {
     return Scaffold(
       appBar: AppBar(
         title: Text("需求二"),
+        actions: [
+          IconButton(onPressed: ()=>core.clearData(), icon: Icon(Icons.delete))
+        ],
         leading: IconButton(
           onPressed: () {
             Navigator.pop(context);
