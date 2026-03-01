@@ -29,38 +29,43 @@ class CoreLogic {
   CoreLogic._internal();
   static const plat = MethodChannel("wasd");
   int steps = 0;
-  final List<double> w = [1200, 2500, 1800, 3200, 2100, 4500, 2800];
-  final List<double> m = [
-    800,
-    1500,
-    2200,
-    3100,
-    1900,
-    4000,
-    3500,
-    2800,
-    4200,
-    3000,
-  ];
+  String lastDate = "";
+  List<double> w = [0,0,0,0,0,0,0];
+  List<double> m = [0,0,0,0,0,0,0,0,0,0,0,0];
+  Function? _onUpdate;
   void init(Function onUpdate){
+    _onUpdate = onUpdate;
     load().then((data){
       if(data.containsKey('step')){
         steps = data['step'];
-        onUpdate();
+        lastDate = data['date'] ?? "";
+        if(data.containsKey("hw")) w = List<double>.from(data['hw']);
+        if(data.containsKey("hm")) m = List<double>.from(data['hm']);
+        _checkDateChange();
+        w[w.length - 1] = steps.toDouble();
+        _onUpdate?.call();
+      }else{
+        lastDate = DateTime.now().toString().split(' ')[0];
+        save();
       }
     });
     plat.setMethodCallHandler((handler) async{
       if(handler.method == "onsss"){
+        _checkDateChange();
         steps++;
+        w[w.length - 1] = steps.toDouble();
         save();
-        onUpdate();
+        _onUpdate?.call();
       }
     });
   }
   Future<void> save() async{
+    if(lastDate == "") lastDate = DateTime.now().toString().split(' ')[0];
     String jS = json.encode({
       'step': steps,
-      'date': DateTime.now().toString().split(' ')[0],
+      'date': lastDate,
+      'hw': w,
+      'hm': m
     });
     await plat.invokeMethod("save",{"json": jS});
   }
@@ -68,6 +73,24 @@ class CoreLogic {
     String? jS = await plat.invokeMethod("load");
     if(jS == null || jS.isEmpty) return{};
     return json.decode(jS);
+  }
+
+  void _checkDateChange() {
+    String todayStr = DateTime.now().toString().split(' ')[0];
+    if(lastDate == "" && lastDate == todayStr) return;
+    DateTime last = DateTime.parse(lastDate);
+    DateTime today = DateTime.parse(todayStr);
+    int dayDiff = today.difference(last).inDays;
+    if(dayDiff > 0){
+      for(int i = 0;i < dayDiff; i++){
+        w.removeAt(0);
+        w.add(0.0);
+      }
+      steps = 0;
+      lastDate = todayStr;
+      w[w.length - 1] = 0.0;
+      save();
+    }
   }
 }
 
